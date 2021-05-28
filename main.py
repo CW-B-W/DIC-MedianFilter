@@ -1,5 +1,6 @@
 import cv2
 import skimage
+import matplotlib.pyplot as plt
 
 filepath = r'./image.jpg'
 proc_image_size = (128, 128)
@@ -20,6 +21,22 @@ img_salt_pepper = skimage.util.random_noise(image=img, mode='s&p', clip=True, am
 
 
 # 5. process median filtering
-
+img_filtered = cv2.medianBlur(img, 3)
 
 # 6. output image
+plt.figure()
+plt.imshow(img, cmap='gray')
+plt.figure()
+plt.imshow(img_salt_pepper, cmap='gray')
+plt.figure()
+plt.imshow(img_filtered, cmap='gray')
+
+wf_names  = ['img.dat', 'golden.dat']
+wimgs = [img_salt_pepper, img_filtered]
+for i in range(len(wf_names)):
+  wf_name = wf_names[i]
+  wimg = wimgs[i]
+  with open(wf_names[i], 'w') as wf:
+    for i in range(wimg.shape[0]):
+      for j in range(wimg.shape[1]):
+        wf.write(str(format(int(img[i, j]), 'x')) + '\n')
