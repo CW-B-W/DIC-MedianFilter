@@ -15,7 +15,7 @@ parameter S0 = 0;
 reg [x:0] state;
 reg [x:0] n_state;
 
-always @(posedge clk or posedge rst) begin
+always @(posedge clk or posedge reset) begin
     state <= n_state;
 end
 
@@ -28,7 +28,7 @@ always @(*) begin
     end
 end
 
-always @(*) begin
+always @(posedge clk or posedge reset) begin
     if (reset) begin
         
         
