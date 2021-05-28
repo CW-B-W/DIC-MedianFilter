@@ -3,7 +3,7 @@ help:
 	@printf 'usage: make <option>\n'
 	@printf '\n'
 	@printf 'options:\n'
-	@printf '\tgentest\t\tgenerate img.dat with image.jpg\n'
+	@printf '\tgentest\t\tgenerate img.dat & golden.dat with image.jpg\n'
 	@printf '\tcppMFE\t\tuse c++ MFE to generate golden_cpp.dat\n'
 	@printf '\tclean\t\tclean compiled files\n'
 
