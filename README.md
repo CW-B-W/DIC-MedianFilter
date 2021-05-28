@@ -1,14 +1,14 @@
 # DIC-MedianFilter
 
 ## usage
-$ make help
+$ make help  
 Show help messages
 
-$ make gentest
+$ make gentest  
 Call main.py to generate img.dat from image.jpg
 
-$ make cppMFE
+$ make cppMFE  
 Compile cppMFE.cpp & Call cppMFE.out to generate golden_cpp.dat from img.dat
 
-$ make clean
+$ make clean  
 Clean compiled files
