@@ -25,12 +25,12 @@ wire signed [ 7:0] y  = y_center + dy;
 parameter S_IDLE   =  0;
 parameter S_RD_REQ =  1;
 parameter S_RD_RES =  2;
-parameter S_BIT_D1 =  3;
-parameter S_BIT_D2 =  4;
-parameter S_BIT_D3 =  5;
-parameter S_BIT_C1 =  6;
-parameter S_BIT_C2 =  7;
-parameter S_BIT_C3 =  8;
+parameter S_BIT_P1 =  3;
+parameter S_BIT_P2 =  4;
+parameter S_BIT_P3 =  5;
+parameter S_BIT_P4 =  6;
+parameter S_BIT_P5 =  7;
+parameter S_BIT_P6 =  8;
 parameter S_MF     =  9;
 parameter S_WR     = 10;
 reg [3:0] state;
@@ -83,7 +83,7 @@ always @(*) begin
                 end
             end
 
-            S_BIT_D1: begin
+            S_BIT_P1: begin
                 for (i = 0; i < 8; i = i + 4) begin
                     if (mat[i] > mat[i+1]) begin
                         mat[i]   <= mat[i+1];
@@ -98,7 +98,7 @@ always @(*) begin
                 end
             end
 
-            S_BIT_D2: begin
+            S_BIT_P2: begin
                 for (i = 0; i < 2; i = i + 1) begin
                     if (mat[i] > mat[i+2]) begin
                         mat[i]   <= mat[i+2];
@@ -113,7 +113,7 @@ always @(*) begin
                 end
             end
 
-            S_BIT_D3: begin
+            S_BIT_P3: begin
                 for (i = 0; i < 4; i = i + 2) begin
                     if (mat[i] > mat[i+1]) begin
                         mat[i]   <= mat[i+1];
@@ -128,7 +128,7 @@ always @(*) begin
                 end
             end
 
-            S_BIT_C1: begin
+            S_BIT_P4: begin
                 for (i = 0; i < 4; i = i + 1) begin
                     if (mat[i] > mat[i+4]) begin
                         mat[i]   <= mat[i+4];
@@ -137,7 +137,7 @@ always @(*) begin
                 end
             end
 
-            S_BIT_C2: begin
+            S_BIT_P5: begin
                 for (i = 0; i < 2; i = i + 1) begin
                     if (mat[i] > mat[i+2]) begin
                         mat[i]   <= mat[i+2];
@@ -152,7 +152,7 @@ always @(*) begin
                 end
             end
 
-            S_BIT_C3: begin
+            S_BIT_P6: begin
                 for (i = 0; i < 8; i = i + 2) begin
                     if (mat[i] > mat[i+1]) begin
                         mat[i]   <= mat[i+1];
@@ -216,32 +216,32 @@ always @(posedge clk or negedge reset) begin
 
             S_RD_RES: begin
                 if (mat_rd_idx == 8)
-                    n_state <= S_BIT_D1;
+                    n_state <= S_BIT_P1;
                 else
                     n_state <= S_RD_REQ;
             end
 
-            S_BIT_D1: begin
-                n_state <= S_BIT_D2;
+            S_BIT_P1: begin
+                n_state <= S_BIT_P2;
             end
 
-            S_BIT_D2: begin
-                n_state <= S_BIT_D3;
+            S_BIT_P2: begin
+                n_state <= S_BIT_P3;
             end
 
-            S_BIT_D3: begin
-                n_state <= S_BIT_C1;
+            S_BIT_P3: begin
+                n_state <= S_BIT_P4;
             end
 
-            S_BIT_C1: begin
-                n_state <= S_BIT_C2;
+            S_BIT_P4: begin
+                n_state <= S_BIT_P5;
             end
 
-            S_BIT_C2: begin
-                n_state <= S_BIT_C3;
+            S_BIT_P5: begin
+                n_state <= S_BIT_P6;
             end
 
-            S_BIT_C3: begin
+            S_BIT_P6: begin
                 n_state <= S_MF;
             end
 

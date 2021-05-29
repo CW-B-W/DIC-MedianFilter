@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void d1(int a[8]) {
+void p1(int a[8]) {
     for (int i = 0; i < 8; i += 4) {
         if (a[i] > a[i+1])
             swap(a[i], a[i+1]);
@@ -17,7 +17,7 @@ void d1(int a[8]) {
     }
 }
 
-void d2(int a[8]) {
+void p2(int a[8]) {
     for (int i = 0; i < 2; i += 1) {
         if (a[i] > a[i+2])
             swap(a[i], a[i+2]);
@@ -28,7 +28,7 @@ void d2(int a[8]) {
     }
 }
 
-void d3(int a[8]) {
+void p3(int a[8]) {
     for (int i = 0; i < 4; i += 2) {
         if (a[i] > a[i+1])
             swap(a[i], a[i+1]);
@@ -39,7 +39,7 @@ void d3(int a[8]) {
     }
 }
 
-void c1(int a[8])
+void p4(int a[8])
 {
     for (int i = 0; i < 4; i += 1) {
         if (a[i] > a[i+4])
@@ -47,7 +47,7 @@ void c1(int a[8])
     }
 }
 
-void c2(int a[8])
+void p5(int a[8])
 {
     for (int i = 0; i < 2; i += 1) {
         if (a[i] > a[i+2])
@@ -59,7 +59,7 @@ void c2(int a[8])
     }
 }
 
-void c3(int a[8])
+void p6(int a[8])
 {
     for (int i = 0; i < 8; i += 2) {
         if (a[i] > a[i+1])
@@ -69,16 +69,16 @@ void c3(int a[8])
 
 int main() {
     int a[8] = {3, 7, 4, 8, 6, 2, 1, 5};
-    d1(a);
-    d2(a);
-    d3(a);
+    p1(a);
+    p2(a);
+    p3(a);
     for (int i : a)
         cout << i << ' ';
     cout << endl;
     
-    c1(a);
-    c2(a);
-    c3(a);
+    p4(a);
+    p5(a);
+    p6(a);
     for (int i : a)
         cout << i << ' ';
     cout << endl;
