@@ -25,9 +25,12 @@ wire signed [ 7:0] y  = y_center + dy;
 parameter S_IDLE   = ;
 parameter S_RD_REQ = ;
 parameter S_RD_RES = ;
-parameter S_BIT_S0 = ;
-parameter S_BIT_S0 = ;
-parameter S_BIT_S0 = ;
+parameter S_BIT_D1 = ;
+parameter S_BIT_D2 = ;
+parameter S_BIT_D3 = ;
+parameter S_BIT_C1 = ;
+parameter S_BIT_C2 = ;
+parameter S_BIT_C3 = ;
 parameter S_MF     = ;
 parameter S_WR     = ;
 reg [x:0] state;
@@ -80,20 +83,98 @@ always @(*) begin
                 end
             end
 
+            S_BIT_D1: begin
+                for (i = 0; i < 8; i = i + 4) begin
+                    if (mat[i] > mat[i+1]) begin
+                        mat[i]   <= mat[i+1];
+                        mat[i+1] <= mat[i];
+                    end
+                end
+                for (i = 2; i < 8; i = i + 4) begin
+                    if (mat[i] < mat[i+1]) begin
+                        mat[i]   <= mat[i+1];
+                        mat[i+1] <= mat[i];
+                    end
+                end
+            end
+
+            S_BIT_D2: begin
+                for (i = 0; i < 2; i = i + 1) begin
+                    if (mat[i] > mat[i+2]) begin
+                        mat[i]   <= mat[i+2];
+                        mat[i+2] <= mat[i];
+                    end
+                end
+                for (i = 4; i < 6; i = i + 1) begin
+                    if (mat[i] < mat[i+2]) begin
+                        mat[i]   <= mat[i+2];
+                        mat[i+2] <= mat[i];
+                    end
+                end
+            end
+
+            S_BIT_D3: begin
+                for (i = 0; i < 4; i = i + 2) begin
+                    if (mat[i] > mat[i+1]) begin
+                        mat[i]   <= mat[i+1];
+                        mat[i+1] <= mat[i];
+                    end
+                end
+                for (i = 4; i < 8; i = i + 2) begin
+                    if (mat[i] < mat[i+1]) begin
+                        mat[i]   <= mat[i+1];
+                        mat[i+1] <= mat[i];
+                    end
+                end
+            end
+
+            S_BIT_C1: begin
+                for (i = 0; i < 4; i = i + 1) begin
+                    if (mat[i] > mat[i+4]) begin
+                        mat[i]   <= mat[i+4];
+                        mat[i+4] <= mat[i];
+                    end
+                end
+            end
+
+            S_BIT_C2: begin
+                for (i = 0; i < 2; i = i + 1) begin
+                    if (mat[i] > mat[i+2]) begin
+                        mat[i]   <= mat[i+2];
+                        mat[i+2] <= mat[i];
+                    end
+                end
+                for (i = 4; i < 6; i = i + 1) begin
+                    if (mat[i] > mat[i+2]) begin
+                        mat[i]   <= mat[i+2];
+                        mat[i+2] <= mat[i];
+                    end
+                end
+            end
+
+            S_BIT_C3: begin
+                for (i = 0; i < 8; i = i + 2) begin
+                    if (mat[i] > mat[i+1]) begin
+                        mat[i]   <= mat[i+1];
+                        mat[i+1] <= mat[i];
+                    end
+                end
+            end
+
             S_MF: begin
-                /* Bitonic sorter, with mat[7:0], note that mat[8] will be processed in the end */
+                /* Finished Bitonic sorter with mat[7:0], note that mat[8] will be now */
 
 
                 /* one of mat[3], mat[4] or mat[8] is the median */
-                    /* if mat[3] < mat[8] < mat[4], then mat[8] is the median */
-                    if (mat[3] < mat[8] && mat[8] < mat[4])
-                        median <= mat[8];
-                    /* if mat[3] < mat[4] < mat[8], then mat[4] is the median */
-                    else if (mat[4] < mat[8])
-                        median <= mat[4];
-                    /* if mat[8] < mat[3] < mat[4], then mat[3] is the median */
-                    else if (mat[8] < mat[3])
-                        median <= mat[3];
+                /* if mat[3] < mat[8] < mat[4], then mat[8] is the median */
+                if (mat[3] < mat[8] && mat[8] < mat[4])
+                    median <= mat[8];
+                /* if mat[3] < mat[4] < mat[8], then mat[4] is the median */
+                else if (mat[4] < mat[8])
+                    median <= mat[4];
+                /* if mat[8] < mat[3] < mat[4], then mat[3] is the median */
+                else if (mat[8] < mat[3])
+                    median <= mat[3];
             end
 
             S_WR: begin
@@ -136,9 +217,33 @@ always @(posedge clk or negedge reset) begin
 
             S_RD_RES: begin
                 if (mat_rd_idx == 8)
-                    n_state <= S_MF;
+                    n_state <= S_BIT_D1;
                 else
                     n_state <= S_RD_REQ;
+            end
+
+            S_BIT_D1: begin
+                n_state <= S_BIT_D2;
+            end
+
+            S_BIT_D2: begin
+                n_state <= S_BIT_D3;
+            end
+
+            S_BIT_D3: begin
+                n_state <= S_BIT_C1;
+            end
+
+            S_BIT_C1: begin
+                n_state <= S_BIT_C2;
+            end
+
+            S_BIT_C2: begin
+                n_state <= S_BIT_C3;
+            end
+
+            S_BIT_C3: begin
+                n_state <= S_MF;
             end
 
             S_MF: begin
