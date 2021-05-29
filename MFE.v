@@ -5,36 +5,36 @@ input              ready;
 
 output reg         busy;
 output reg  [13:0] iaddr;   
-input       [ 7:0] idata;                /* data in Grayscale Image MEM */
-input       [ 7:0] data_rd;              /* data in Result MEM */
+input       [ 7:0] idata;                   /* data in Grayscale Image MEM */
+input       [ 7:0] data_rd;                 /* data in Result MEM */
 output reg  [13:0] addr;
 output reg  [ 7:0] data_wr;
 output reg         wen;
 
 reg         [ 7:0] mat [8:0];
-reg         [ 3:0] mat_rd_idx;           /* the idx of currently reading mat elem */
+reg         [ 3:0] mat_rd_idx;              /* the idx of currently reading mat elem */
 reg         [ 7:0] median;
-/* coordinate variable should be 8-bit, i.e., {sign, 0~127} */
-reg  signed [ 7:0] x_center;             /* the x-coordinate of image which is being processed */ 
-reg  signed [ 7:0] y_center;             /* the y-coordinate of image which is being processed */
-wire signed [ 7:0] dx = mat_rd_idx % 3 - 1;  /* the offset from x_center */
-wire signed [ 7:0] dy = mat_rd_idx / 3 - 1;  /* the offset from y_center */
+                                            /* coordinate variable should be 8-bit, i.e., {sign, 0~127} */
+reg  signed [ 7:0] x_center;                /* the x-coordinate of image which is being processed */ 
+reg  signed [ 7:0] y_center;                /* the y-coordinate of image which is being processed */
+wire signed [ 7:0] dx = mat_rd_idx % 3 - 1; /* the offset from x_center */
+wire signed [ 7:0] dy = mat_rd_idx / 3 - 1; /* the offset from y_center */
 wire signed [ 7:0] x  = x_center + dx;
 wire signed [ 7:0] y  = y_center + dy;
 
-parameter S_IDLE   = ;
-parameter S_RD_REQ = ;
-parameter S_RD_RES = ;
-parameter S_BIT_D1 = ;
-parameter S_BIT_D2 = ;
-parameter S_BIT_D3 = ;
-parameter S_BIT_C1 = ;
-parameter S_BIT_C2 = ;
-parameter S_BIT_C3 = ;
-parameter S_MF     = ;
-parameter S_WR     = ;
-reg [x:0] state;
-reg [x:0] n_state;
+parameter S_IDLE   =  0;
+parameter S_RD_REQ =  1;
+parameter S_RD_RES =  2;
+parameter S_BIT_D1 =  3;
+parameter S_BIT_D2 =  4;
+parameter S_BIT_D3 =  5;
+parameter S_BIT_C1 =  6;
+parameter S_BIT_C2 =  7;
+parameter S_BIT_C3 =  8;
+parameter S_MF     =  9;
+parameter S_WR     = 10;
+reg [3:0] state;
+reg [3:0] n_state;
 
 integer i;
 
@@ -46,7 +46,7 @@ always @(*) begin
     if (!reset) begin
         
     end
-    else
+    else begin
         case (state)
             S_IDLE: begin
                 if (ready)
@@ -164,15 +164,14 @@ always @(*) begin
             S_MF: begin
                 /* Finished Bitonic sorter with mat[7:0], note that mat[8] will be now */
 
-
                 /* one of mat[3], mat[4] or mat[8] is the median */
-                /* if mat[3] < mat[8] < mat[4], then mat[8] is the median */
+                /* if mat[3] <= mat[8] <= mat[4], then mat[8] is the median */
                 if (mat[3] < mat[8] && mat[8] < mat[4])
                     median <= mat[8];
-                /* if mat[3] < mat[4] < mat[8], then mat[4] is the median */
+                /* if mat[3] <  mat[4] <= mat[8], then mat[4] is the median */
                 else if (mat[4] < mat[8])
                     median <= mat[4];
-                /* if mat[8] < mat[3] < mat[4], then mat[3] is the median */
+                /* if mat[8] <= mat[3] <  mat[4], then mat[3] is the median */
                 else if (mat[8] < mat[3])
                     median <= mat[3];
             end
@@ -192,7 +191,7 @@ always @(*) begin
             end
 
             default: begin
-                
+                $stop;
             end
         endcase
     end
@@ -202,7 +201,7 @@ always @(posedge clk or negedge reset) begin
     if (!reset) begin
         n_state <= S_IDLE;
     end
-    else
+    else begin
         case (state)
             S_IDLE: begin
                 if (ready)
@@ -258,7 +257,7 @@ always @(posedge clk or negedge reset) begin
             end
 
             default: begin
-                
+                $stop;
             end
         endcase
     end
