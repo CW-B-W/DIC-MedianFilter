@@ -166,13 +166,13 @@ always @(*) begin
 
                 /* one of mat[3], mat[4] or mat[8] is the median */
                 /* if mat[3] <= mat[8] <= mat[4], then mat[8] is the median */
-                if (mat[3] < mat[8] && mat[8] < mat[4])
+                if (mat[3] <= mat[8] && mat[8] <= mat[4])
                     median <= mat[8];
                 /* if mat[3] <  mat[4] <= mat[8], then mat[4] is the median */
-                else if (mat[4] < mat[8])
+                else if (mat[4] <= mat[8])
                     median <= mat[4];
                 /* if mat[8] <= mat[3] <  mat[4], then mat[3] is the median */
-                else if (mat[8] < mat[3])
+                else if (mat[8] <= mat[3])
                     median <= mat[3];
             end
 
