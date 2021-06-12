@@ -1,5 +1,5 @@
 `timescale 1ns/10ps
-`define CYCLE      25.0          	  // Modify your clock period here
+`define CYCLE      19.7          	  // Modify your clock period here
 `define End_CYCLE  100000000              // Modify cycle times once your design need more cycle times!
 `define PAT         "img.dat"
 `define L0_EXP0     "golden.dat"     
