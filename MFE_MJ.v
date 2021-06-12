@@ -17,8 +17,8 @@ reg         [ 7:0] median;
                                             /* coordinate variable should be 8-bit, i.e., {sign, 0~127} */
 reg  signed [ 7:0] x_center;                /* the x-coordinate of image which is being processed */ 
 reg  signed [ 7:0] y_center;                /* the y-coordinate of image which is being processed */
-wire signed [ 7:0] dx = mat_rd_idx % 7'd3 - 7'd1; /* the offset from x_center */
-wire signed [ 7:0] dy = mat_rd_idx / 7'd3 - 7'd1; /* the offset from y_center */
+wire signed [ 7:0] dx = mat_rd_idx / 7'd3 - 7'd1; /* the offset from x_center */
+wire signed [ 7:0] dy = mat_rd_idx % 7'd3 - 7'd1; /* the offset from y_center */
 wire signed [ 7:0] x  = x_center + dx;
 wire signed [ 7:0] y  = y_center + dy;
 
