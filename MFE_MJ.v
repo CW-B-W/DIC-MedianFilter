@@ -13,14 +13,13 @@ output reg         wen;
 
 reg         [ 7:0] mat [8:0];
 reg         [ 3:0] mat_rd_idx;                    /* the idx of currently reading mat elem */
-reg         [ 7:0] median;
                                                   /* coordinate variable should be 8-bit, i.e., {sign, 0~127} */
-reg  signed [13:0] x_center;                      /* the x-coordinate of image which is being processed */ 
-reg  signed [13:0] y_center;                      /* the y-coordinate of image which is being processed */
-wire signed [13:0] dx = mat_rd_idx / 7'd3 - 7'd1; /* the offset from x_center */
-wire signed [13:0] dy = mat_rd_idx % 7'd3 - 7'd1; /* the offset from y_center */
-wire signed [13:0] x  = x_center + dx;
-wire signed [13:0] y  = y_center + dy;
+reg  signed [ 7:0] x_center;                      /* the x-coordinate of image which is being processed */ 
+reg  signed [ 7:0] y_center;                      /* the y-coordinate of image which is being processed */
+wire signed [ 1:0] dx = mat_rd_idx / 4'd3 - 4'd1; /* the offset from x_center */
+wire signed [ 1:0] dy = mat_rd_idx % 4'd3 - 4'd1; /* the offset from y_center */
+wire signed [ 7:0] x  = x_center + dx;
+wire signed [ 7:0] y  = y_center + dy;
 
 reg         [ 7:0] mat_for_sort [8:0];
 
