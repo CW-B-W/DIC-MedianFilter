@@ -22,6 +22,10 @@ wire signed [ 7:0] x  = x_center + dx;
 wire signed [ 7:0] y  = y_center + dy;
 
 reg         [ 7:0] mat_for_sort [8:0];
+reg         [ 3:0] sort_idx;
+reg         [ 7:0] sort_a;
+reg         [ 7:0] sort_b;
+reg         [ 7:0] sort_c;
 
 parameter S_IDLE   =  0;
 parameter S_RD_REQ =  1;
@@ -30,7 +34,8 @@ parameter S_CPY    =  3;
 parameter S_SORT_R =  4;
 parameter S_SORT_C =  5;
 parameter S_SORT_D =  6;
-parameter S_WR     =  7;
+parameter S_SORT_E =  7;
+parameter S_WR     =  8;
 reg [3:0] state;
 reg [3:0] n_state;
 
@@ -123,22 +128,117 @@ always @(posedge clk) begin
             for (i = 0; i < 9; i = i + 1) begin
                 mat_for_sort[i] <= mat[i];
             end
+            sort_idx <= 0;
         end
 
         S_SORT_R: begin
-            sort_3(mat_for_sort[0], mat_for_sort[1], mat_for_sort[2], mat_for_sort[0], mat_for_sort[1], mat_for_sort[2]);
-            sort_3(mat_for_sort[3], mat_for_sort[4], mat_for_sort[5], mat_for_sort[3], mat_for_sort[4], mat_for_sort[5]);
-            sort_3(mat_for_sort[6], mat_for_sort[7], mat_for_sort[8], mat_for_sort[6], mat_for_sort[7], mat_for_sort[8]);
+            case (sort_idx)
+                0: begin
+                    sort_a <= mat_for_sort[0];
+                    sort_b <= mat_for_sort[1];
+                    sort_c <= mat_for_sort[2];
+                    sort_idx <= 1;
+                end
+
+                1: begin
+                    mat_for_sort[0] <= sort_a;
+                    mat_for_sort[1] <= sort_b;
+                    mat_for_sort[2] <= sort_c;
+                    sort_a <= mat_for_sort[3];
+                    sort_b <= mat_for_sort[4];
+                    sort_c <= mat_for_sort[5];
+                    sort_idx <= 2;
+                end
+
+                2: begin
+                    mat_for_sort[3] <= sort_a;
+                    mat_for_sort[4] <= sort_b;
+                    mat_for_sort[5] <= sort_c;
+                    sort_a <= mat_for_sort[6];
+                    sort_b <= mat_for_sort[7];
+                    sort_c <= mat_for_sort[8];
+                    sort_idx <= 3;
+                end
+
+                3: begin
+                    mat_for_sort[6] <= sort_a;
+                    mat_for_sort[7] <= sort_b;
+                    mat_for_sort[8] <= sort_c;
+                    sort_idx <= 4;
+                end
+
+                default: begin
+                    $stop;
+                end
+            endcase
         end
 
         S_SORT_C: begin
-            sort_3(mat_for_sort[0], mat_for_sort[3], mat_for_sort[6], mat_for_sort[0], mat_for_sort[3], mat_for_sort[6]);
-            sort_3(mat_for_sort[1], mat_for_sort[4], mat_for_sort[7], mat_for_sort[1], mat_for_sort[4], mat_for_sort[7]);
-            sort_3(mat_for_sort[2], mat_for_sort[5], mat_for_sort[8], mat_for_sort[2], mat_for_sort[5], mat_for_sort[8]);
+            case (sort_idx)
+                4: begin
+                    sort_a <= mat_for_sort[0];
+                    sort_b <= mat_for_sort[3];
+                    sort_c <= mat_for_sort[6];
+                    sort_idx <= 5;
+                end
+
+                5: begin
+                    mat_for_sort[0] <= sort_a;
+                    mat_for_sort[3] <= sort_b;
+                    mat_for_sort[6] <= sort_c;
+                    sort_a <= mat_for_sort[1];
+                    sort_b <= mat_for_sort[4];
+                    sort_c <= mat_for_sort[7];
+                    sort_idx <= 6;
+                end
+
+                6: begin
+                    mat_for_sort[1] <= sort_a;
+                    mat_for_sort[4] <= sort_b;
+                    mat_for_sort[7] <= sort_c;
+                    sort_a <= mat_for_sort[2];
+                    sort_b <= mat_for_sort[5];
+                    sort_c <= mat_for_sort[8];
+                    sort_idx <= 7;
+                end
+
+                7: begin
+                    mat_for_sort[2] <= sort_a;
+                    mat_for_sort[5] <= sort_b;
+                    mat_for_sort[8] <= sort_c;
+                    sort_idx <= 8;
+                end
+
+                default: begin
+                    $stop;
+                end
+            endcase
         end
 
         S_SORT_D: begin
-            sort_3(mat_for_sort[2], mat_for_sort[4], mat_for_sort[6], mat_for_sort[2], mat_for_sort[4], mat_for_sort[6]);
+            case (sort_idx)
+                8: begin
+                    sort_a <= mat_for_sort[2];
+                    sort_b <= mat_for_sort[4];
+                    sort_c <= mat_for_sort[6];
+                    sort_idx <= 9;
+                end
+
+                9: begin
+                    mat_for_sort[2] <= sort_a;
+                    mat_for_sort[4] <= sort_b;
+                    mat_for_sort[6] <= sort_c;
+                    sort_idx <= 0;
+                end
+
+                default: begin
+                    $stop;
+                end
+            endcase
+        end
+
+        S_SORT_E: begin
+            sort_3(sort_a, sort_b, sort_c, sort_a, sort_b, sort_c);
         end
 
         S_WR: begin
@@ -157,7 +257,7 @@ always @(posedge clk) begin
         end
 
         default: begin
-
+            $stop;
         end
     endcase
 end
@@ -188,15 +288,33 @@ always @(*) begin
         end
 
         S_SORT_R: begin
-            n_state = S_SORT_C;
+            if (sort_idx == 3)
+                n_state = S_SORT_C;
+            else
+                n_state = S_SORT_E;
         end
 
         S_SORT_C: begin
-            n_state = S_SORT_D;
+            if (sort_idx == 7)
+                n_state = S_SORT_D;
+            else
+                n_state = S_SORT_E;
         end
 
         S_SORT_D: begin
-            n_state = S_WR;
+            if (sort_idx == 9)
+                n_state = S_WR;
+            else
+                n_state = S_SORT_E;
+        end
+
+        S_SORT_E: begin
+            if (sort_idx <= 3)
+                n_state = S_SORT_R;
+            else if (sort_idx <= 7)
+                n_state = S_SORT_C;
+            else
+                n_state = S_SORT_D;
         end
 
         S_WR: begin
@@ -207,7 +325,7 @@ always @(*) begin
         end
 
         default: begin
-        
+            $stop;
         end
     endcase
 end
