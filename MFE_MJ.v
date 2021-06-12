@@ -26,18 +26,20 @@ reg         [ 3:0] sort_idx;
 reg         [ 7:0] sort_a;
 reg         [ 7:0] sort_b;
 reg         [ 7:0] sort_c;
+reg         [ 7:0] sort_s0;
+reg         [ 7:0] sort_s1;
+reg         [ 7:0] sort_s2;
 
 parameter S_IDLE   =  0;
 parameter S_RD_REQ =  1;
 parameter S_RD_RES =  2;
-parameter S_CPY    =  3;
-parameter S_SORT_R =  4;
-parameter S_SORT_C =  5;
-parameter S_SORT_D =  6;
-parameter S_SORT_E =  7;
-parameter S_WR     =  8;
-reg [3:0] state;
-reg [3:0] n_state;
+parameter S_SORT_R =  3;
+parameter S_SORT_C =  4;
+parameter S_SORT_D =  5;
+parameter S_SORT_E =  6;
+parameter S_WR     =  7;
+reg [2:0] state;
+reg [2:0] n_state;
 
 integer i;
 
@@ -106,29 +108,26 @@ always @(posedge clk) begin
 
         S_RD_RES: begin
             for (i = 0; i < 9-1; i = i + 1) begin
-                mat[i] <= mat[i+1];
+                mat[i]          <= mat[i+1];
+                mat_for_sort[i] <= mat[i+1];
             end
 
             if (x < 0 || x >= 128 || y < 0 || y >= 128) begin
-                mat[8] <= 0;
+                mat[8]          <= 0;
+                mat_for_sort[8] <= 0;
             end
             else begin
-                mat[8] <= idata;
+                mat[8]          <= idata;
+                mat_for_sort[8] <= idata;
             end
 
             if (mat_rd_idx == 8) begin
                 mat_rd_idx <= 0;
+                sort_idx <= 0;
             end
             else begin
                 mat_rd_idx <= mat_rd_idx + 4'd1;
             end
-        end
-
-        S_CPY: begin
-            for (i = 0; i < 9; i = i + 1) begin
-                mat_for_sort[i] <= mat[i];
-            end
-            sort_idx <= 0;
         end
 
         S_SORT_R: begin
@@ -141,9 +140,9 @@ always @(posedge clk) begin
                 end
 
                 1: begin
-                    mat_for_sort[0] <= sort_a;
-                    mat_for_sort[1] <= sort_b;
-                    mat_for_sort[2] <= sort_c;
+                    mat_for_sort[0] <= sort_s0;
+                    mat_for_sort[1] <= sort_s1;
+                    mat_for_sort[2] <= sort_s2;
                     sort_a <= mat_for_sort[3];
                     sort_b <= mat_for_sort[4];
                     sort_c <= mat_for_sort[5];
@@ -151,9 +150,9 @@ always @(posedge clk) begin
                 end
 
                 2: begin
-                    mat_for_sort[3] <= sort_a;
-                    mat_for_sort[4] <= sort_b;
-                    mat_for_sort[5] <= sort_c;
+                    mat_for_sort[3] <= sort_s0;
+                    mat_for_sort[4] <= sort_s1;
+                    mat_for_sort[5] <= sort_s2;
                     sort_a <= mat_for_sort[6];
                     sort_b <= mat_for_sort[7];
                     sort_c <= mat_for_sort[8];
@@ -161,14 +160,13 @@ always @(posedge clk) begin
                 end
 
                 3: begin
-                    mat_for_sort[6] <= sort_a;
-                    mat_for_sort[7] <= sort_b;
-                    mat_for_sort[8] <= sort_c;
+                    mat_for_sort[6] <= sort_s0;
+                    mat_for_sort[7] <= sort_s1;
+                    mat_for_sort[8] <= sort_s2;
                     sort_idx <= 4;
                 end
 
                 default: begin
-                    $stop;
                 end
             endcase
         end
@@ -183,9 +181,9 @@ always @(posedge clk) begin
                 end
 
                 5: begin
-                    mat_for_sort[0] <= sort_a;
-                    mat_for_sort[3] <= sort_b;
-                    mat_for_sort[6] <= sort_c;
+                    mat_for_sort[0] <= sort_s0;
+                    mat_for_sort[3] <= sort_s1;
+                    mat_for_sort[6] <= sort_s2;
                     sort_a <= mat_for_sort[1];
                     sort_b <= mat_for_sort[4];
                     sort_c <= mat_for_sort[7];
@@ -193,9 +191,9 @@ always @(posedge clk) begin
                 end
 
                 6: begin
-                    mat_for_sort[1] <= sort_a;
-                    mat_for_sort[4] <= sort_b;
-                    mat_for_sort[7] <= sort_c;
+                    mat_for_sort[1] <= sort_s0;
+                    mat_for_sort[4] <= sort_s1;
+                    mat_for_sort[7] <= sort_s2;
                     sort_a <= mat_for_sort[2];
                     sort_b <= mat_for_sort[5];
                     sort_c <= mat_for_sort[8];
@@ -203,14 +201,13 @@ always @(posedge clk) begin
                 end
 
                 7: begin
-                    mat_for_sort[2] <= sort_a;
-                    mat_for_sort[5] <= sort_b;
-                    mat_for_sort[8] <= sort_c;
+                    mat_for_sort[2] <= sort_s0;
+                    mat_for_sort[5] <= sort_s1;
+                    mat_for_sort[8] <= sort_s2;
                     sort_idx <= 8;
                 end
 
                 default: begin
-                    $stop;
                 end
             endcase
         end
@@ -225,20 +222,19 @@ always @(posedge clk) begin
                 end
 
                 9: begin
-                    mat_for_sort[2] <= sort_a;
-                    mat_for_sort[4] <= sort_b;
-                    mat_for_sort[6] <= sort_c;
+                    mat_for_sort[2] <= sort_s0;
+                    mat_for_sort[4] <= sort_s1;
+                    mat_for_sort[6] <= sort_s2;
                     sort_idx <= 0;
                 end
 
                 default: begin
-                    $stop;
                 end
             endcase
         end
 
         S_SORT_E: begin
-            sort_3(sort_a, sort_b, sort_c, sort_a, sort_b, sort_c);
+            sort_3(sort_a, sort_b, sort_c, sort_s0, sort_s1, sort_s2);
         end
 
         S_WR: begin
@@ -257,7 +253,6 @@ always @(posedge clk) begin
         end
 
         default: begin
-            $stop;
         end
     endcase
 end
@@ -278,13 +273,9 @@ always @(*) begin
 
         S_RD_RES: begin
             if (mat_rd_idx == 8)
-                n_state = S_CPY;
+                n_state = S_SORT_R;
             else
                 n_state = S_RD_REQ;
-        end
-
-        S_CPY: begin
-            n_state = S_SORT_R;
         end
 
         S_SORT_R: begin
@@ -325,7 +316,6 @@ always @(*) begin
         end
 
         default: begin
-            $stop;
         end
     endcase
 end
