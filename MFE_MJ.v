@@ -5,21 +5,23 @@ input              ready;
 
 output reg         busy;
 output reg  [13:0] iaddr;   
-input       [ 7:0] idata;                         /* data in Grayscale Image MEM */
-input       [ 7:0] data_rd;                       /* data in Result MEM */
+input       [ 7:0] idata;                                                    /* data in Grayscale Image MEM */
+input       [ 7:0] data_rd;                                                  /* data in Result MEM */
 output reg  [13:0] addr;
 output reg  [ 7:0] data_wr;
 output reg         wen;
 
 reg         [ 7:0] mat [8:0];
-reg         [ 3:0] mat_rd_idx;                    /* the idx of currently reading mat elem */
-                                                  /* coordinate variable should be 8-bit, i.e., {sign, 0~127} */
-reg  signed [ 7:0] x_center;                      /* the x-coordinate of image which is being processed */ 
-reg  signed [ 7:0] y_center;                      /* the y-coordinate of image which is being processed */
-wire signed [ 1:0] dx = mat_rd_idx / 4'd3 - 4'd1; /* the offset from x_center */
-wire signed [ 1:0] dy = mat_rd_idx % 4'd3 - 4'd1; /* the offset from y_center */
-wire signed [ 7:0] x  = x_center + dx;
-wire signed [ 7:0] y  = y_center + dy;
+reg         [ 3:0] mat_rec_idx;                                              /* the idx of currently reading mat elem */
+reg                req_sent;
+wire               req_done = mat_rec_idx >= 8;
+                                                                             /* coordinate variable should be 8-bit, i.e., {sign, 0~127} */
+reg  signed [ 7:0] x_center;                                                 /* the x-coordinate of image which is being processed */ 
+reg  signed [ 7:0] y_center;                                                 /* the y-coordinate of image which is being processed */
+wire signed [ 7:0] x_req  = x_center + (mat_rec_idx+req_sent) / 4'd3 - 4'd1; /* the x-coordinate of requesting pixel */
+wire signed [ 7:0] y_req  = y_center + (mat_rec_idx+req_sent) % 4'd3 - 4'd1; /* the y-coordinate of requesting pixel */
+wire signed [ 7:0] x_rec  = x_center + (mat_rec_idx)          / 4'd3 - 4'd1; /* the x-coordinate of received pixel */
+wire signed [ 7:0] y_rec  = y_center + (mat_rec_idx)          % 4'd3 - 4'd1; /* the y-coordinate of received pixel */
 
 reg         [ 7:0] mat_for_sort [8:0];
 reg         [ 3:0] sort_idx;
@@ -31,13 +33,12 @@ reg         [ 7:0] sort_s1;
 reg         [ 7:0] sort_s2;
 
 parameter S_IDLE   =  0;
-parameter S_RD_REQ =  1;
-parameter S_RD_RES =  2;
-parameter S_SORT_R =  3;
-parameter S_SORT_C =  4;
-parameter S_SORT_D =  5;
-parameter S_SORT_E =  6;
-parameter S_WR     =  7;
+parameter S_RD     =  1;
+parameter S_SORT_R =  2;
+parameter S_SORT_C =  3;
+parameter S_SORT_D =  4;
+parameter S_SORT_E =  5;
+parameter S_WR     =  6;
 reg [2:0] state;
 reg [2:0] n_state;
 
@@ -90,40 +91,45 @@ always @(posedge clk) begin
     case (state)
         S_IDLE: begin
             busy <= 0;
-            x_center   <= 0;
-            y_center   <= 0;
-            mat_rd_idx <= 0;
+            x_center    <= 0;
+            y_center    <= 0;
+            mat_rec_idx <= 0;
+            req_sent    <= 0;
         end
 
-        S_RD_REQ: begin
-            wen  <= 0;
-            busy <= 1;
-            if (!(x < 0 || x >= 128 || y < 0 || y >= 128)) begin
-                iaddr <= (y << 7) | x;
-            end
-        end
-
-        S_RD_RES: begin
-            for (i = 0; i < 9-1; i = i + 1) begin
-                mat[i]          <= mat[i+1];
-                mat_for_sort[i] <= mat[i+1];
+        S_RD: begin
+            if (!req_done) begin
+                wen      <= 0;
+                busy     <= 1;
+                req_sent <= 1;
+                if (!(x_req < 0 || x_req >= 128 || y_req < 0 || y_req >= 128)) begin
+                    iaddr <= (y_req << 7) | x_req;
+                end
             end
 
-            if (x < 0 || x >= 128 || y < 0 || y >= 128) begin
-                mat[8]          <= 0;
-                mat_for_sort[8] <= 0;
-            end
-            else begin
-                mat[8]          <= idata;
-                mat_for_sort[8] <= idata;
-            end
+            if (req_sent) begin
+                for (i = 0; i < 9-1; i = i + 1) begin
+                    mat[i]          <= mat[i+1];
+                    mat_for_sort[i] <= mat[i+1];
+                end
 
-            if (mat_rd_idx == 8) begin
-                mat_rd_idx <= 6;
-                sort_idx   <= 0;
-            end
-            else begin
-                mat_rd_idx <= mat_rd_idx + 4'd1;
+                if (x_rec < 0 || x_rec >= 128 || y_rec < 0 || y_rec >= 128) begin
+                    mat[8]          <= 0;
+                    mat_for_sort[8] <= 0;
+                end
+                else begin
+                    mat[8]          <= idata;
+                    mat_for_sort[8] <= idata;
+                end
+
+                if (mat_rec_idx == 8) begin
+                    mat_rec_idx <= 6;
+                    sort_idx    <= 0;
+                    req_sent    <= 0;
+                end
+                else begin
+                    mat_rec_idx <= mat_rec_idx + 4'd1;
+                end
             end
         end
 
@@ -242,7 +248,7 @@ always @(posedge clk) begin
             if (x_center == 127) begin
                 x_center   <= 0;
                 y_center   <= y_center + 8'd1;
-                mat_rd_idx <= 0;
+                mat_rec_idx <= 0;
             end
             else begin
                 x_center   <= x_center + 8'd1;
@@ -261,18 +267,14 @@ always @(*) begin
             if (reset)
                 n_state = S_IDLE;
             else
-                n_state = S_RD_REQ;
+                n_state = S_RD;
         end
 
-        S_RD_REQ: begin
-            n_state = S_RD_RES;
-        end
-
-        S_RD_RES: begin
-            if (mat_rd_idx == 8)
+        S_RD: begin
+            if (mat_rec_idx == 8)
                 n_state = S_SORT_R;
             else
-                n_state = S_RD_REQ;
+                n_state = S_RD;
         end
 
         S_SORT_R: begin
@@ -309,7 +311,7 @@ always @(*) begin
             if (x_center == 127 && y_center == 127)
                 n_state = S_IDLE;
             else
-                n_state = S_RD_REQ;
+                n_state = S_RD;
         end
 
         default: begin
