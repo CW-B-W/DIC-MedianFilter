@@ -15,22 +15,23 @@ reg         [ 7:0] mat [8:0];
 reg         [ 3:0] mat_rd_idx;                    /* the idx of currently reading mat elem */
 reg         [ 7:0] median;
                                                   /* coordinate variable should be 8-bit, i.e., {sign, 0~127} */
-reg  signed [ 7:0] x_center;                      /* the x-coordinate of image which is being processed */ 
-reg  signed [ 7:0] y_center;                      /* the y-coordinate of image which is being processed */
-wire signed [ 7:0] dx = mat_rd_idx / 7'd3 - 7'd1; /* the offset from x_center */
-wire signed [ 7:0] dy = mat_rd_idx % 7'd3 - 7'd1; /* the offset from y_center */
-wire signed [ 7:0] x  = x_center + dx;
-wire signed [ 7:0] y  = y_center + dy;
+reg  signed [13:0] x_center;                      /* the x-coordinate of image which is being processed */ 
+reg  signed [13:0] y_center;                      /* the y-coordinate of image which is being processed */
+wire signed [13:0] dx = mat_rd_idx / 7'd3 - 7'd1; /* the offset from x_center */
+wire signed [13:0] dy = mat_rd_idx % 7'd3 - 7'd1; /* the offset from y_center */
+wire signed [13:0] x  = x_center + dx;
+wire signed [13:0] y  = y_center + dy;
 
 reg         [ 7:0] mat_for_sort [8:0];
 
 parameter S_IDLE   =  0;
 parameter S_RD_REQ =  1;
 parameter S_RD_RES =  2;
-parameter S_SORT_R =  3;
-parameter S_SORT_C =  4;
-parameter S_SORT_D =  5;
-parameter S_WR     =  6;
+parameter S_CPY    =  3;
+parameter S_SORT_R =  4;
+parameter S_SORT_C =  5;
+parameter S_SORT_D =  6;
+parameter S_WR     =  7;
 reg [3:0] state;
 reg [3:0] n_state;
 
@@ -41,12 +42,12 @@ task sort_2;
     output [7:0] s0, s1;
     begin
         if (a < b) begin
-            s0 <= a;
-            s1 <= b;
+            s0 = a;
+            s1 = b;
         end
         else begin
-            s0 <= b;
-            s1 <= a;
+            s0 = b;
+            s1 = a;
         end
     end
 endtask
@@ -56,16 +57,16 @@ task sort_3;
     output [7:0] s0, s1, s2;
     begin
         if (a <= c && b <= c) begin
-            s2 <= c;
+            s2 = c;
             sort_2(a, b, s0, s1);
         end
         else begin
             if (a <= b) begin /* a <= c <  b */
-                s2 <= b;
+                s2 = b;
                 sort_2(a, c, s0, s1);
             end
             else begin
-                s2 <= a;
+                s2 = a;
                 sort_2(b, c, s0, s1);
             end
         end
@@ -92,6 +93,7 @@ always @(posedge clk) begin
         end
 
         S_RD_REQ: begin
+            wen  <= 0;
             busy <= 1;
             if (!(x < 0 || x >= 128 || y < 0 || y >= 128)) begin
                 iaddr <= (y << 7) | x;
@@ -99,24 +101,28 @@ always @(posedge clk) begin
         end
 
         S_RD_RES: begin
+            for (i = 0; i < 9-1; i = i + 1) begin
+                mat[i] <= mat[i+1];
+            end
+
             if (x < 0 || x >= 128 || y < 0 || y >= 128) begin
                 mat[8] <= 0;
             end
             else begin
                 mat[8] <= idata;
             end
-            for (i = 0; i < 9-1; i = i + 1) begin
-                mat[i] <= mat[i+1];
-            end
 
             if (mat_rd_idx == 8) begin
-                mat_rd_idx <= 6;
-                for (i = 0; i < 9; i = i + 1) begin
-                    mat_for_sort[i] <= mat[i];
-                end
+                mat_rd_idx <= 0;
             end
             else begin
                 mat_rd_idx <= mat_rd_idx + 4'd1;
+            end
+        end
+
+        S_CPY: begin
+            for (i = 0; i < 9; i = i + 1) begin
+                mat_for_sort[i] <= mat[i];
             end
         end
 
@@ -147,11 +153,12 @@ always @(posedge clk) begin
                 mat_rd_idx <= 0;
             end
             else begin
-                x_center <= x_center + 8'd1;
+                x_center   <= x_center + 8'd1;
             end
         end
 
         default: begin
+
         end
     endcase
 end
@@ -172,9 +179,13 @@ always @(*) begin
 
         S_RD_RES: begin
             if (mat_rd_idx == 8)
-                n_state = S_SORT_R;
+                n_state = S_CPY;
             else
                 n_state = S_RD_REQ;
+        end
+
+        S_CPY: begin
+            n_state = S_SORT_R;
         end
 
         S_SORT_R: begin
