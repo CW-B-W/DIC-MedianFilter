@@ -5,18 +5,18 @@ input              ready;
 
 output reg         busy;
 output reg  [13:0] iaddr;   
-input       [ 7:0] idata;                   /* data in Grayscale Image MEM */
-input       [ 7:0] data_rd;                 /* data in Result MEM */
+input       [ 7:0] idata;                         /* data in Grayscale Image MEM */
+input       [ 7:0] data_rd;                       /* data in Result MEM */
 output reg  [13:0] addr;
 output reg  [ 7:0] data_wr;
 output reg         wen;
 
 reg         [ 7:0] mat [8:0];
-reg         [ 3:0] mat_rd_idx;              /* the idx of currently reading mat elem */
+reg         [ 3:0] mat_rd_idx;                    /* the idx of currently reading mat elem */
 reg         [ 7:0] median;
-                                            /* coordinate variable should be 8-bit, i.e., {sign, 0~127} */
-reg  signed [ 7:0] x_center;                /* the x-coordinate of image which is being processed */ 
-reg  signed [ 7:0] y_center;                /* the y-coordinate of image which is being processed */
+                                                  /* coordinate variable should be 8-bit, i.e., {sign, 0~127} */
+reg  signed [ 7:0] x_center;                      /* the x-coordinate of image which is being processed */ 
+reg  signed [ 7:0] y_center;                      /* the y-coordinate of image which is being processed */
 wire signed [ 7:0] dx = mat_rd_idx / 7'd3 - 7'd1; /* the offset from x_center */
 wire signed [ 7:0] dy = mat_rd_idx % 7'd3 - 7'd1; /* the offset from y_center */
 wire signed [ 7:0] x  = x_center + dx;
@@ -30,8 +30,7 @@ parameter S_RD_RES =  2;
 parameter S_SORT_R =  3;
 parameter S_SORT_C =  4;
 parameter S_SORT_D =  5;
-parameter S_MF     =  6;
-parameter S_WR     =  7;
+parameter S_WR     =  6;
 reg [3:0] state;
 reg [3:0] n_state;
 
@@ -56,7 +55,7 @@ task sort_3;
     input  [7:0] a, b, c;
     output [7:0] s0, s1, s2;
     begin
-        if (a <= b && b <= c) begin
+        if (a <= c && b <= c) begin
             s2 <= c;
             sort_2(a, b, s0, s1);
         end
@@ -95,7 +94,7 @@ always @(posedge clk) begin
         S_RD_REQ: begin
             busy <= 1;
             if (!(x < 0 || x >= 128 || y < 0 || y >= 128)) begin
-                iaddr <= (x << 7) | y;
+                iaddr <= (y << 7) | x;
             end
         end
 
@@ -106,7 +105,7 @@ always @(posedge clk) begin
             else begin
                 mat[8] <= idata;
             end
-            for (i = 0; i < 8; i = i + 1) begin
+            for (i = 0; i < 9-1; i = i + 1) begin
                 mat[i] <= mat[i+1];
             end
 
@@ -137,16 +136,9 @@ always @(posedge clk) begin
             sort_3(mat_for_sort[2], mat_for_sort[4], mat_for_sort[6], mat_for_sort[2], mat_for_sort[4], mat_for_sort[6]);
         end
 
-        S_MF: begin
-            if (mat_for_sort[2] > mat_for_sort[6])
-                median = mat_for_sort[2];
-            else
-                median = mat_for_sort[6];
-        end
-
         S_WR: begin
-            addr    <= (x_center << 7) | y_center;
-            data_wr <= median;
+            addr    <= (y_center << 7) | x_center;
+            data_wr <= mat_for_sort[4];
             wen     <= 1;
 
             if (x_center == 127) begin
@@ -194,10 +186,6 @@ always @(*) begin
         end
 
         S_SORT_D: begin
-            n_state = S_MF;
-        end
-
-        S_MF: begin
             n_state = S_WR;
         end
 
