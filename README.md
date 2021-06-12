@@ -9,9 +9,9 @@
 * `img.dat` is the input image data of the verilog module MFE
 * `golden.dat` is the expected result of processed `img.dat`
 * `golden_cpp.dat` is the `golden.dat` generated with `cppMFE.cpp`
-* `/presim` contains the results of presim
-* `/postsim` contains the results of postsim
-* `/unused` contains the abandoned solutions
+* `presim/` contains the results of presim
+* `postsim/` contains the results of postsim
+* `unused/` contains the abandoned solutions
 
 ## tools usage
 $ make help  
