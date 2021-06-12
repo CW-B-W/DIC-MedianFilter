@@ -9,6 +9,36 @@ uint8_t img[128][128];
 uint8_t mem[128][128];
 uint8_t god[128][128];
 
+void sort_2(uint8_t a, uint8_t b, uint8_t &s0, uint8_t &s1)
+{
+    if (a < b) {
+        s0 = a;
+        s1 = b;
+    }
+    else {
+        s0 = b;
+        s1 = a;
+    }
+}
+
+void sort_3(uint8_t a, uint8_t b, uint8_t c, uint8_t &s0, uint8_t &s1, uint8_t &s2)
+{
+    if (a <= c && b <= c) {
+        s2 = c;
+        sort_2(a, b, s0, s1);
+    }
+    else {
+        if (a <= b) {
+            s2 = b;
+            sort_2(a, c, s0, s1);
+        }
+        else {
+            s2 = a;
+            sort_2(b, c, s0, s1);
+        }
+    }
+}
+
 void median_filter()
 {
     for (int y_center = 0; y_center < 128; ++y_center) {
@@ -31,10 +61,16 @@ void median_filter()
             /* Sort */
             uint8_t mat_sort[9];
             memcpy(mat_sort, mat, sizeof(uint8_t)*9);
-            sort(mat_sort, mat_sort+9);
+            sort_3(mat_sort[0], mat_sort[1], mat_sort[2], mat_sort[0], mat_sort[1], mat_sort[2]);
+            sort_3(mat_sort[3], mat_sort[4], mat_sort[5], mat_sort[3], mat_sort[4], mat_sort[5]);
+            sort_3(mat_sort[6], mat_sort[7], mat_sort[8], mat_sort[6], mat_sort[7], mat_sort[8]);
+            sort_3(mat_sort[0], mat_sort[3], mat_sort[6], mat_sort[0], mat_sort[3], mat_sort[6]);
+            sort_3(mat_sort[1], mat_sort[4], mat_sort[7], mat_sort[1], mat_sort[4], mat_sort[7]);
+            sort_3(mat_sort[2], mat_sort[5], mat_sort[8], mat_sort[2], mat_sort[5], mat_sort[8]);
+            sort_3(mat_sort[2], mat_sort[4], mat_sort[6], mat_sort[2], mat_sort[4], mat_sort[6]);
+            int median = mat_sort[4];
 
             /* Write back */
-            int median = mat_sort[4];
             mem[y_center][x_center] = median;
             mat_rd_idx = 0;
         }
