@@ -89,10 +89,7 @@ end
 always @(posedge clk) begin
     case (state)
         S_IDLE: begin
-            if (reset)
-                busy <= 0;
-            else
-                busy <= 0;
+            busy <= 0;
             x_center   <= 0;
             y_center   <= 0;
             mat_rd_idx <= 0;
@@ -122,8 +119,8 @@ always @(posedge clk) begin
             end
 
             if (mat_rd_idx == 8) begin
-                mat_rd_idx <= 0;
-                sort_idx <= 0;
+                mat_rd_idx <= 6;
+                sort_idx   <= 0;
             end
             else begin
                 mat_rd_idx <= mat_rd_idx + 4'd1;
