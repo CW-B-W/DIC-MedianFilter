@@ -23,7 +23,7 @@ Call main.py to generate img.dat & golden.dat from image.jpg
 $ make cppMFE  
 Compile cppMFE.cpp & Call cppMFE.out to generate golden_cpp.dat from img.dat
 
-$ make cppMJ
+$ make cppMJ  
 Run MJ.cpp
 
 $ make clean  
