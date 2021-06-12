@@ -6,7 +6,7 @@
 * `MF.cpp` is the c++ implementation of `MFE_MJ.v`
 * `main.py` is the python tool for generating salf-and-pepper noise image
 * `cppMFE.cpp` is the c++ implementation of median filter, used for generating golden_cpp.dat
-* `img.dat` is the input image of the verilog module MFE
+* `img.dat` is the input image data of the verilog module MFE
 * `golden.dat` is the expected result of processed `img.dat`
 * `golden_cpp.dat` is the `golden.dat` generated with `cppMFE.cpp`
 * `/presim` contains the results of presim
